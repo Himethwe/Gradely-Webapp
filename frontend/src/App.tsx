@@ -1,80 +1,92 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { supabase } from "./api/auth"; // Ensure this import path is correct
+import { supabase } from "./api/auth";
 import Layout from "./components/Layout";
 import AuthGuard from "./components/AuthGuard";
 
 // Public Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import UpdatePassword from "./pages/UpdatePassword"; // New Page
+import UpdatePassword from "./pages/UpdatePassword";
 
-// Private/App Pages
+// Private Pages
 import Dashboard from "./pages/Dashboard";
 import AcademicRecord from "./pages/AcademicRecord";
 import Strategist from "./pages/Strategist";
 
+// --- FIX: Use 'import type' to solve the TypeScript error ---
+import type { User } from "@supabase/supabase-js";
+
 function App() {
-  // --- AUTH LISTENER (Fixes Auto-Login & Reset Flow) ---
+  const [user, setUser] = useState<User | null>(null);
+
+  // --- AUTH LISTENER ---
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        // 1. Handle Auto-Login after Email Confirmation
-        if (event === "SIGNED_IN" && session) {
-          localStorage.setItem("access_token", session.access_token);
-
-          // If we have user metadata (name), save it too
-          if (session.user.user_metadata?.full_name) {
-            localStorage.setItem(
-              "user_name",
-              session.user.user_metadata.full_name
-            );
-          }
-        }
-
-        // 2. Handle Logout
-        if (event === "SIGNED_OUT") {
-          localStorage.clear(); // Clear all app data on logout
+    // 1. Initial Check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session) {
+        localStorage.setItem("access_token", session.access_token);
+        if (session.user.user_metadata?.full_name) {
+          localStorage.setItem(
+            "user_name",
+            session.user.user_metadata.full_name
+          );
         }
       }
-    );
+    });
+
+    // 2. Real-time Subscription (Fixes the "Hi Name" delay)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+
+      if (event === "SIGNED_IN" && session) {
+        localStorage.setItem("access_token", session.access_token);
+        if (session.user.user_metadata?.full_name) {
+          localStorage.setItem(
+            "user_name",
+            session.user.user_metadata.full_name
+          );
+        }
+      }
+
+      if (event === "SIGNED_OUT") {
+        localStorage.clear();
+        setUser(null);
+      }
+    });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
   return (
     <BrowserRouter>
       <Routes>
-        {/* ======================================================== */}
-        {/* 1. PUBLIC ROUTES WITH NAVBAR                             */}
-        {/* ======================================================== */}
-        <Route element={<Layout />}>
+        {/* Pass 'user' to Layout so Navbar updates instantly */}
+        <Route element={<Layout user={user} />}>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/planner" element={<AcademicRecord />} />
           <Route path="/strategist" element={<Strategist />} />
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Login />} />
+          <Route path="/update-password" element={<UpdatePassword />} />
         </Route>
 
-        {/* ======================================================== */}
-        {/* 2. AUTH PAGES (No Navbar)                                */}
-        {/* ======================================================== */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Login />} />
-
-        {/* NEW: Password Reset Page */}
-        <Route path="/update-password" element={<UpdatePassword />} />
-
-        {/* ======================================================== */}
-        {/* 3. PRIVATE ROUTES (Requires Login)                       */}
-        {/* ======================================================== */}
+        {/* Private Routes */}
         <Route element={<AuthGuard />}>
-          <Route element={<Layout />}>
+          <Route element={<Layout user={user} />}>
             <Route path="/dashboard" element={<Dashboard />} />
           </Route>
         </Route>
 
-        {/* Default redirect */}
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
