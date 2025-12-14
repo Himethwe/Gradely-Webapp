@@ -100,7 +100,7 @@ export default function Strategist() {
     window.scrollTo(0, 0);
   }, []);
 
-  // --- FIX 1: DATA LOADING LOGIC (Handles both Guest & Logged In) ---
+  // --- DATA LOADING LOGIC ---
   useEffect(() => {
     const storedDegreeId = localStorage.getItem("selectedDegreeId");
     // Check if user is logged in
@@ -131,8 +131,14 @@ export default function Strategist() {
 
           gradesResponse.data.forEach((g: any) => {
             if (g.is_repeat) {
-              dbSupp[g.module_id] = g.grade;
+              // FIX: Only add to suppGrades if it is a REAL grade, NOT "REPEAT_PENDING"
+              // This ensures unresolved repeats fall through to the "REPEAT" (0.00) logic
+              if (g.grade && g.grade !== "REPEAT_PENDING") {
+                dbSupp[g.module_id] = g.grade;
+              }
+
               // Ensure main grade map knows it's a repeat
+              // We check !dbGrades[id] to avoid overwriting if duplicate rows exist (edge case)
               if (!dbGrades[g.module_id]) {
                 dbGrades[g.module_id] = "REPEAT";
               }
@@ -199,10 +205,12 @@ export default function Strategist() {
 
       if (status === "REPEAT") {
         effectiveRepeats[id] = true;
+        // Since we filtered out "REPEAT_PENDING" in fetch,
+        // suppGrades[id] will be undefined if no real grade exists.
         if (suppGrades[id]) {
           effectiveGrades[id] = suppGrades[id];
         } else {
-          effectiveGrades[id] = "REPEAT";
+          effectiveGrades[id] = "REPEAT"; // This triggers 0.00 in calculateGPA
         }
       } else if (status === "MC") {
         if (suppGrades[id]) {
@@ -243,14 +251,26 @@ export default function Strategist() {
       const grade = effectiveGrades[mod.id];
       const isRepeat = effectiveRepeats[mod.id];
 
+      // Skip MC (Medical) from calculations unless resolved
       if (grade === "MC") {
         remainingCredits += mod.credits;
         return;
       }
 
-      if (grade && GRADE_SCALE[grade] !== undefined) {
-        let points = GRADE_SCALE[grade];
-        if (isRepeat) points = Math.min(points, 2.0);
+      // Check for valid grade OR unresolved Repeat
+      const isValidGrade = grade && GRADE_SCALE[grade] !== undefined;
+      const isUnresolvedRepeat = grade === "REPEAT";
+
+      if (isValidGrade || isUnresolvedRepeat) {
+        let points = 0;
+
+        if (isUnresolvedRepeat) {
+          points = 0.0; // Fail counts as 0 points
+        } else {
+          points = GRADE_SCALE[grade];
+          // Cap repeats at 2.0 (C)
+          if (isRepeat) points = Math.min(points, 2.0);
+        }
 
         completedCredits += mod.credits;
 
@@ -272,7 +292,11 @@ export default function Strategist() {
 
         semesterMap[semKey].modules.push({
           name: mod.name,
-          grade: isRepeat ? `${grade} (R)` : grade,
+          grade: isUnresolvedRepeat
+            ? "REPEAT"
+            : isRepeat
+            ? `${grade} (R)`
+            : grade,
         });
       } else {
         remainingCredits += mod.credits;
@@ -280,6 +304,8 @@ export default function Strategist() {
     });
 
     const totalCredits = completedCredits + remainingCredits;
+    // Use the calculated GPA to back-calculate total points
+    // This ensures alignment between the GPA Card and the "Target" logic
     const currentPoints = currentGPA * completedCredits;
 
     const totalPointsNeeded = targetGPA * totalCredits;
@@ -649,8 +675,6 @@ export default function Strategist() {
                       tick={false}
                       axisLine={false}
                     />
-
-                    {/* FIX 2: Black Outline Removal */}
                     <Radar
                       name="Field GPA"
                       dataKey="A"
