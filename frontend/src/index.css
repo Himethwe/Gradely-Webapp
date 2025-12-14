@@ -32,3 +32,18 @@
   0% { background-position: 0 0; }
   100% { background-position: 40px 40px; }
 }
+
+/* --- FIX: Force Remove Chart Outlines --- */
+/* Target the wrapper, the svg surface, and the paths inside */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-layer,
+.recharts-sector,
+path {
+  outline: none !important;
+}
+
+/* Aggressive focus removal for clicked elements */
+*:focus {
+  outline: none !important;
+}
