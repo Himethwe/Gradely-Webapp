@@ -598,9 +598,10 @@ export default function AcademicRecord() {
                               return (
                                 <div
                                   key={module.id}
-                                  className="group p-4 bg-white rounded-xl border border-bg-300 hover:border-primary-100 hover:shadow-md transition-all flex items-center justify-between gap-4"
+                                  // FIX 1: Responsive Flex - Column on Mobile, Row on Desktop
+                                  className="group p-4 bg-white rounded-xl border border-bg-300 hover:border-primary-100 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4"
                                 >
-                                  <div className="flex-grow min-w-0">
+                                  <div className="flex-grow min-w-0 w-full md:w-auto">
                                     <div className="font-bold text-text-100 truncate pr-2 group-hover:text-primary-100 transition-colors">
                                       {module.name}
                                     </div>
@@ -617,7 +618,7 @@ export default function AcademicRecord() {
                                     </div>
                                   </div>
 
-                                  <div className="relative">
+                                  <div className="relative w-full md:w-auto">
                                     <select
                                       value={status}
                                       onChange={(e) =>
@@ -626,18 +627,19 @@ export default function AcademicRecord() {
                                           e.target.value
                                         )
                                       }
+                                      // FIX 2: Full width select on mobile, fixed on desktop
                                       className={`
-                                    appearance-none w-32 h-10 text-center font-bold text-sm rounded-lg border-2 cursor-pointer transition-all outline-none focus:ring-2 focus:ring-offset-1
-                                    ${
-                                      status === "MC"
-                                        ? "bg-purple-50 border-purple-200 text-purple-700"
-                                        : status === "REPEAT"
-                                        ? "bg-slate-100 border-slate-300 text-slate-600"
-                                        : status
-                                        ? "bg-primary-100 border-primary-100 text-white shadow-lg shadow-primary-100/30"
-                                        : "bg-bg-100 border-bg-300 text-text-200 hover:border-primary-200"
-                                    }
-                                    `}
+                                        appearance-none w-full md:w-32 h-10 text-center font-bold text-sm rounded-lg border-2 cursor-pointer transition-all outline-none focus:ring-2 focus:ring-offset-1
+                                        ${
+                                          status === "MC"
+                                            ? "bg-purple-50 border-purple-200 text-purple-700"
+                                            : status === "REPEAT"
+                                            ? "bg-slate-100 border-slate-300 text-slate-600"
+                                            : status
+                                            ? "bg-primary-100 border-primary-100 text-white shadow-lg shadow-primary-100/30"
+                                            : "bg-bg-100 border-bg-300 text-text-200 hover:border-primary-200"
+                                        }
+                                      `}
                                     >
                                       <option value="">-</option>
                                       {Object.keys(GRADE_SCALE).map((grade) => (
@@ -688,12 +690,16 @@ export default function AcademicRecord() {
                                   <div className="font-bold text-text-100 truncate pr-2">
                                     {module.name}
                                   </div>
-                                  <div className="text-xs flex gap-2 mt-1">
+                                  <div className="text-xs flex gap-2 mt-1 items-center">
                                     <span className="text-text-200">
                                       Sem {module.semester}
                                     </span>
+                                    {/* FIX 3: Added Category Label Here */}
+                                    <span className="text-text-200 border-l border-slate-300 pl-2">
+                                      {module.category}
+                                    </span>
                                     <span
-                                      className={`font-bold px-2 rounded ${
+                                      className={`font-bold px-2 rounded ml-auto md:ml-0 ${
                                         isMedical
                                           ? "bg-purple-100 text-purple-700"
                                           : "bg-slate-200 text-slate-600"
@@ -714,13 +720,13 @@ export default function AcademicRecord() {
                                       )
                                     }
                                     className={`
-                                appearance-none w-24 h-10 text-center font-bold text-sm rounded-lg border-2 cursor-pointer transition-all outline-none focus:ring-2 focus:ring-offset-1
-                                ${
-                                  suppGrade
-                                    ? "bg-primary-100 border-primary-100 text-white shadow-lg"
-                                    : "bg-white border-bg-300 text-text-200 hover:border-primary-200"
-                                }
-                              `}
+                                      appearance-none w-24 h-10 text-center font-bold text-sm rounded-lg border-2 cursor-pointer transition-all outline-none focus:ring-2 focus:ring-offset-1
+                                      ${
+                                        suppGrade
+                                          ? "bg-primary-100 border-primary-100 text-white shadow-lg"
+                                          : "bg-white border-bg-300 text-text-200 hover:border-primary-200"
+                                      }
+                                    `}
                                   >
                                     <option value="">-</option>
                                     {Object.keys(GRADE_SCALE)
