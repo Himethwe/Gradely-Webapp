@@ -243,28 +243,16 @@ export default function Strategist() {
       const grade = effectiveGrades[mod.id];
       const isRepeat = effectiveRepeats[mod.id];
 
-      // Skip MC (Medical) from calculations unless resolved
       if (grade === "MC") {
         remainingCredits += mod.credits;
         return;
       }
 
-      // FIX START: Explicitly check for valid grade OR unresolved Repeat
-      const isValidGrade = grade && GRADE_SCALE[grade] !== undefined;
-      const isUnresolvedRepeat = grade === "REPEAT";
+      if (grade && GRADE_SCALE[grade] !== undefined) {
+        let points = GRADE_SCALE[grade];
+        if (isRepeat) points = Math.min(points, 2.0);
 
-      if (isValidGrade || isUnresolvedRepeat) {
-        let points = 0;
-
-        if (isUnresolvedRepeat) {
-          points = 0.0; // Fail counts as 0 points
-        } else {
-          points = GRADE_SCALE[grade];
-          // Cap repeats at 2.0 (C)
-          if (isRepeat) points = Math.min(points, 2.0);
-        }
-
-        completedCredits += mod.credits; // It counts as attempted/completed credits
+        completedCredits += mod.credits;
 
         // Update Charts Data
         const cat = mod.category || "General";
@@ -284,21 +272,14 @@ export default function Strategist() {
 
         semesterMap[semKey].modules.push({
           name: mod.name,
-          grade: isUnresolvedRepeat
-            ? "REPEAT"
-            : isRepeat
-            ? `${grade} (R)`
-            : grade,
+          grade: isRepeat ? `${grade} (R)` : grade,
         });
       } else {
         remainingCredits += mod.credits;
       }
-      // FIX END
     });
 
     const totalCredits = completedCredits + remainingCredits;
-    // Note: We use the calculated 'currentGPA' from util to back-calculate points
-    // so that the total target calculation aligns perfectly with the main GPA display
     const currentPoints = currentGPA * completedCredits;
 
     const totalPointsNeeded = targetGPA * totalCredits;
