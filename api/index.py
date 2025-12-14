@@ -1,4 +1,8 @@
 from backend.main import app
 
-# This allows Vercel to handle the FastAPI app as a serverless function
-# It imports the 'app' object from your existing backend folder.
+# 1. Critical Fix: Tell FastAPI it is running behind "/api"
+# This strips the "/api" prefix so requests like "/api/login" connect to "/login"
+app.root_path = "/api"
+
+# 2. This is just for Vercel to find the app instance
+# No other code is needed here.
