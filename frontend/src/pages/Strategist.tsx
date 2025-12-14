@@ -100,7 +100,7 @@ export default function Strategist() {
     window.scrollTo(0, 0);
   }, []);
 
-  // --- DATA LOADING LOGIC ---
+  // --- FIX 1: DATA LOADING LOGIC (Handles both Guest & Logged In) ---
   useEffect(() => {
     const storedDegreeId = localStorage.getItem("selectedDegreeId");
     // Check if user is logged in
@@ -114,7 +114,7 @@ export default function Strategist() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1. Fetch Modules
+        // 1. Fetch Modules (Always needed)
         const modulesResponse = await api.get(
           `/degrees/${storedDegreeId}/modules`
         );
@@ -243,27 +243,14 @@ export default function Strategist() {
       const grade = effectiveGrades[mod.id];
       const isRepeat = effectiveRepeats[mod.id];
 
-      // Skip MC (Medical) from calculations unless resolved
       if (grade === "MC") {
         remainingCredits += mod.credits;
         return;
       }
 
-      // FIX: Check if it is a valid grade OR an unresolved Repeat
-      // If it is 'REPEAT', we treat it as 0.00 points but COUNT the credits.
-      const isValidGrade = grade && GRADE_SCALE[grade] !== undefined;
-      const isUnresolvedRepeat = grade === "REPEAT";
-
-      if (isValidGrade || isUnresolvedRepeat) {
-        let points = 0;
-
-        if (isUnresolvedRepeat) {
-          points = 0.0; // Fail counts as 0
-        } else {
-          points = GRADE_SCALE[grade];
-          // Cap repeats at 2.0 (C)
-          if (isRepeat) points = Math.min(points, 2.0);
-        }
+      if (grade && GRADE_SCALE[grade] !== undefined) {
+        let points = GRADE_SCALE[grade];
+        if (isRepeat) points = Math.min(points, 2.0);
 
         completedCredits += mod.credits;
 
