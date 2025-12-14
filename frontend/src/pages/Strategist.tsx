@@ -34,7 +34,7 @@ import {
   Line,
 } from "recharts";
 import api from "../api/axios";
-import { GRADE_SCALE, calculateGPA } from "../utils/academic"; // Import calculateGPA
+import { GRADE_SCALE, calculateGPA } from "../utils/academic";
 
 // Helper to check for NGPA
 const isNonGpaModule = (val: any) => {
@@ -90,7 +90,7 @@ export default function Strategist() {
   const [suppGrades, setSuppGrades] = useState<Record<number, string>>({});
   const [targetGPA, setTargetGPA] = useState<number>(3.7);
 
-  // FIX 1: Add Student Type to handle filtering (Day Scholar vs Cadet)
+  // Student Type for filtering (Day vs Cadet)
   const [studentType, _setStudentType] = useState<"day" | "cadet">(() => {
     return (localStorage.getItem("studentType") as "day" | "cadet") || "day";
   });
@@ -100,25 +100,58 @@ export default function Strategist() {
     window.scrollTo(0, 0);
   }, []);
 
+  // --- FIX 1: DATA LOADING LOGIC (Handles both Guest & Logged In) ---
   useEffect(() => {
     const storedDegreeId = localStorage.getItem("selectedDegreeId");
-    const storedGrades = localStorage.getItem("guestGrades");
-    const storedSupp = localStorage.getItem("guestSuppGrades");
+    // Check if user is logged in
+    const token = localStorage.getItem("access_token");
 
     if (!storedDegreeId) {
       navigate("/");
       return;
     }
 
-    if (storedGrades) setGrades(JSON.parse(storedGrades));
-    if (storedSupp) setSuppGrades(JSON.parse(storedSupp));
-
     const fetchData = async () => {
       try {
-        const response = await api.get(`/degrees/${storedDegreeId}/modules`);
-        setAllModules(response.data);
+        setLoading(true);
+        // 1. Fetch Modules (Always needed)
+        const modulesResponse = await api.get(
+          `/degrees/${storedDegreeId}/modules`
+        );
+        setAllModules(modulesResponse.data);
+
+        // 2. Fetch Grades
+        if (token) {
+          // A. LOGGED IN USER: Fetch from Database
+          const gradesResponse = await api.get("/grades");
+
+          // Convert DB array to the Record<number, string> format
+          const dbGrades: Record<number, string> = {};
+          const dbSupp: Record<number, string> = {};
+
+          gradesResponse.data.forEach((g: any) => {
+            if (g.is_repeat) {
+              dbSupp[g.module_id] = g.grade;
+              // Ensure main grade map knows it's a repeat
+              if (!dbGrades[g.module_id]) {
+                dbGrades[g.module_id] = "REPEAT";
+              }
+            } else {
+              dbGrades[g.module_id] = g.grade;
+            }
+          });
+
+          setGrades(dbGrades);
+          setSuppGrades(dbSupp);
+        } else {
+          // B. GUEST USER: Fetch from LocalStorage
+          const storedGrades = localStorage.getItem("guestGrades");
+          const storedSupp = localStorage.getItem("guestSuppGrades");
+          if (storedGrades) setGrades(JSON.parse(storedGrades));
+          if (storedSupp) setSuppGrades(JSON.parse(storedSupp));
+        }
       } catch (err) {
-        console.error("Failed to load modules", err);
+        console.error("Failed to load data", err);
       } finally {
         setLoading(false);
       }
@@ -147,14 +180,14 @@ export default function Strategist() {
     return closestGrade;
   };
 
-  // --- CORE LOGIC (Standardized with AcademicRecord) ---
+  // --- CORE LOGIC ---
   const stats = useMemo(() => {
-    // FIX 2: Filter Modules (Exclude Military for Day Scholars)
+    // Filter Modules
     const relevantModules = allModules.filter((m) =>
       studentType === "cadet" ? true : m.category !== "Military"
     );
 
-    // FIX 3: Construct Effective Grades (Matches AcademicRecord exactly)
+    // Construct Effective Grades
     const effectiveRepeats: Record<number, boolean> = {};
     const effectiveGrades: Record<number, string> = {};
 
@@ -169,7 +202,6 @@ export default function Strategist() {
         if (suppGrades[id]) {
           effectiveGrades[id] = suppGrades[id];
         } else {
-          // No supp grade yet -> Treat as 0.00 Fail
           effectiveGrades[id] = "REPEAT";
         }
       } else if (status === "MC") {
@@ -183,7 +215,7 @@ export default function Strategist() {
       }
     });
 
-    // FIX 4: Use Shared Calculation Utility
+    // Calculate GPA
     const currentGPAString = calculateGPA(
       relevantModules,
       effectiveGrades,
@@ -192,9 +224,6 @@ export default function Strategist() {
     const currentGPA = parseFloat(currentGPAString);
 
     // --- CHART & TREND DATA GENERATION ---
-    // Now we loop through RELEVANT modules to build the charts
-    // using the EFFECTIVE grades we just resolved.
-
     let completedCredits = 0;
     let remainingCredits = 0;
 
@@ -214,7 +243,6 @@ export default function Strategist() {
       const grade = effectiveGrades[mod.id];
       const isRepeat = effectiveRepeats[mod.id];
 
-      // If Pending Medical (MC), skip calculation but count as remaining
       if (grade === "MC") {
         remainingCredits += mod.credits;
         return;
@@ -251,9 +279,8 @@ export default function Strategist() {
       }
     });
 
-    // Use total credits from filtered list
     const totalCredits = completedCredits + remainingCredits;
-    const currentPoints = currentGPA * completedCredits; // Back-calculate total points
+    const currentPoints = currentGPA * completedCredits;
 
     const totalPointsNeeded = targetGPA * totalCredits;
     const pointsStillNeeded = totalPointsNeeded - currentPoints;
@@ -297,7 +324,7 @@ export default function Strategist() {
       completedCredits,
       remainingCredits,
       totalCredits,
-      currentGPA, // Uses the exact same value as AcademicRecord
+      currentGPA,
       requiredAvg,
       isPossible,
       isDone,
@@ -622,12 +649,15 @@ export default function Strategist() {
                       tick={false}
                       axisLine={false}
                     />
+
+                    {/* FIX 2: Black Outline Removal */}
                     <Radar
                       name="Field GPA"
                       dataKey="A"
                       stroke="#2563eb"
                       fill="#2563eb"
                       fillOpacity={0.4}
+                      style={{ outline: "none" }}
                     />
                     <Tooltip
                       contentStyle={{
@@ -776,11 +806,19 @@ export default function Strategist() {
                       return null;
                     }}
                   />
-                  <Bar dataKey="gpa" radius={[6, 6, 0, 0]} barSize={50}>
+
+                  {/* FIX 2: Black Outline Removal */}
+                  <Bar
+                    dataKey="gpa"
+                    radius={[6, 6, 0, 0]}
+                    barSize={50}
+                    style={{ outline: "none" }}
+                  >
                     {stats.trendData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.gpa >= 3.0 ? "#0077C2" : "#59a5f5"}
+                        style={{ outline: "none" }}
                       />
                     ))}
                   </Bar>
