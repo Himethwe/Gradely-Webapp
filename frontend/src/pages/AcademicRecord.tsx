@@ -413,8 +413,8 @@ export default function AcademicRecord() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-
-              <h1 className="text-lg md:text-xl font-bold font-sans text-text-100 truncate flex items-center gap-2">
+              {/* FIX: Removed 'truncate' so long degree names wrap on mobile */}
+              <h1 className="text-lg md:text-xl font-bold font-sans text-text-100 flex items-center gap-2 leading-tight">
                 <GraduationCap className="hidden md:block h-6 w-6 text-primary-100" />
                 {degreeName}
               </h1>
