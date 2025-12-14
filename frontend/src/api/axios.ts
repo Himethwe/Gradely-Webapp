@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// 1. Load the API URL from .env (or default to localhost)
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+// On Vercel, frontend and backend are on the same domain.
+// We use "/api" so it automatically goes to the backend.
+const BASE_URL = import.meta.env.PROD ? "/api" : "http://localhost:8000";
 
 const api = axios.create({
     baseURL: BASE_URL,
