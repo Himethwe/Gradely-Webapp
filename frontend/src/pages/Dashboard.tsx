@@ -177,6 +177,15 @@ export default function Dashboard() {
   const [selectedSem, setSelectedSem] = useState(1);
   const [drillDownSem, setDrillDownSem] = useState<string | null>(null);
 
+  // --- NEW: Mobile Detection State ---
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // --- 1. DATA FETCHING ---
   useEffect(() => {
     const loadDashboard = async () => {
@@ -744,6 +753,8 @@ export default function Dashboard() {
 
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
+                // FIX: If Mobile + Drilled Down, switch to Vertical Layout (Horizontal Bars)
+                layout={isMobile && drillDownSem ? "vertical" : "horizontal"}
                 data={drillDownSem ? drillDownData : trendData}
                 onClick={(state) => {
                   if (!drillDownSem && state && state.activeLabel) {
@@ -757,18 +768,29 @@ export default function Dashboard() {
                   stroke="#f3f4f6"
                 />
                 <XAxis
-                  dataKey="name"
+                  // FIX: Swap Axes based on layout
+                  type={isMobile && drillDownSem ? "number" : "category"}
+                  dataKey={isMobile && drillDownSem ? undefined : "name"}
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 700 }}
                   dy={10}
                   interval={0}
+                  domain={[0, 4]} // Ensure numbers go 0-4
                 />
                 <YAxis
+                  // FIX: Swap Axes based on layout
+                  type={isMobile && drillDownSem ? "category" : "number"}
+                  dataKey={isMobile && drillDownSem ? "name" : undefined}
                   domain={[0, 4]}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: "#6b7280", fontSize: 12, fontWeight: 700 }}
+                  width={isMobile && drillDownSem ? 100 : 40} // Give more space for text on mobile
+                  tick={{
+                    fill: "#6b7280",
+                    fontSize: isMobile && drillDownSem ? 10 : 12,
+                    fontWeight: 700,
+                  }}
                 />
                 <Tooltip
                   cursor={{ fill: "#f3f4f6" }}
@@ -778,7 +800,13 @@ export default function Dashboard() {
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                   }}
                 />
-                <ReferenceLine y={3.7} stroke="#fbbf24" strokeDasharray="3 3">
+                <ReferenceLine
+                  // FIX: If horizontal bars, Ref Line should be X not Y
+                  x={isMobile && drillDownSem ? 3.7 : undefined}
+                  y={!(isMobile && drillDownSem) ? 3.7 : undefined}
+                  stroke="#fbbf24"
+                  strokeDasharray="3 3"
+                >
                   <Label
                     value="Target: First Class"
                     position="insideTopRight"
@@ -790,7 +818,9 @@ export default function Dashboard() {
 
                 <Bar
                   dataKey={drillDownSem ? "grade" : "gpa"}
-                  radius={[6, 6, 0, 0]}
+                  radius={
+                    isMobile && drillDownSem ? [0, 6, 6, 0] : [6, 6, 0, 0]
+                  } // Rotate radius
                   barSize={drillDownSem ? 20 : 40}
                   animationDuration={800}
                   style={{ outline: "none" }}
