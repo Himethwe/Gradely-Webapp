@@ -14,7 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import AcademicRecord from "./pages/AcademicRecord";
 import Strategist from "./pages/Strategist";
 
-// --- FIX: Use 'import type' to solve the TypeScript error ---
+// Use 'import type' for TypeScript
 import type { User } from "@supabase/supabase-js";
 
 function App() {
@@ -36,7 +36,7 @@ function App() {
       }
     });
 
-    // 2. Real-time Subscription (Fixes the "Hi Name" delay)
+    // 2. Real-time Subscription
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -53,8 +53,18 @@ function App() {
       }
 
       if (event === "SIGNED_OUT") {
-        localStorage.clear();
+        // --- CRITICAL FIX START ---
+        // Do NOT use localStorage.clear() because it deletes the selected Degree info.
+        // Only remove the items related to Authentication.
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("user_name");
+        localStorage.removeItem("sb-access-token"); // Remove Supabase internal token if present
+        localStorage.removeItem("sb-refresh-token");
+
+        // We purposefully leave 'selectedDegreeId' and 'selectedDegreeName'
+        // in local storage so the next login remembers the preference.
         setUser(null);
+        // --- CRITICAL FIX END ---
       }
     });
 
