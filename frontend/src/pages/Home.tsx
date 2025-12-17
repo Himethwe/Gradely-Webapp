@@ -10,7 +10,7 @@ import {
   LayoutDashboard,
   Info,
   ShieldCheck,
-  Loader2, // Added Loader2 icon
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
@@ -34,7 +34,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [user, setUser] = useState<any>(null);
 
-  // NEW: Track if we are currently processing a magic link login
+  // Track if we are currently processing a magic link login
   const [isVerifying, setIsVerifying] = useState(false);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -55,22 +55,19 @@ export default function Home() {
 
   // --- AUTH LISTENER ---
   useEffect(() => {
-    // 1. Check if we are landing from an email link (Hash check)
     if (window.location.hash && window.location.hash.includes("access_token")) {
       setIsVerifying(true);
     }
 
-    // 2. Get Initial Session (getSession is faster/better for redirects than getUser)
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session) setIsVerifying(false); // Stop verifying if session found
+      if (session) setIsVerifying(false);
     });
 
-    // 3. Listen for Real-time changes (Login, Logout, Auto-Confirm)
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
-        if (session) setIsVerifying(false); // Stop verifying once logged in
+        if (session) setIsVerifying(false);
       }
     );
 
@@ -86,17 +83,13 @@ export default function Home() {
       const foundDegree = degrees.find((d) => d.id.toString() === savedId);
       if (foundDegree) {
         setSelectedDegree(foundDegree);
+        setSearchTerm(foundDegree.name); // Ensure search box shows the saved name
       }
     }
   }, [degrees]);
 
   useEffect(() => {
     fetchDegrees();
-
-    const savedName = localStorage.getItem("selectedDegreeName");
-    if (savedName) {
-      setSearchTerm(savedName);
-    }
 
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -114,20 +107,29 @@ export default function Home() {
     degree.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // --- CRITICAL FIX: Save to Storage IMMEDIATELY on selection ---
   const handleSelectDegree = (degree: Degree) => {
     setSelectedDegree(degree);
     setSearchTerm(degree.name);
     setIsDropdownOpen(false);
+
+    // This ensures that even if they click "Dashboard" in the Nav immediately,
+    // the app knows which degree they are talking about.
+    localStorage.setItem("selectedDegreeId", degree.id.toString());
+    localStorage.setItem("selectedDegreeName", degree.name);
   };
 
   const handleClearSearch = () => {
     setSearchTerm("");
     setSelectedDegree(null);
     setIsDropdownOpen(true);
+    // We do NOT clear localStorage here to prevent the Dashboard
+    // from crashing if the user just wanted to search for something else.
   };
 
   const handleStartGuestMode = () => {
     if (selectedDegree) {
+      // (Redundant safety save, but good to keep)
       localStorage.setItem("selectedDegreeId", selectedDegree.id.toString());
       localStorage.setItem("selectedDegreeName", selectedDegree.name);
       navigate("/planner");
@@ -143,7 +145,6 @@ export default function Home() {
       <main className="relative w-full flex items-center min-h-[600px] overflow-visible z-30 pb-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 w-full grid lg:grid-cols-2 gap-12 items-center relative">
           {/* LEFT COLUMN */}
-          {/* FIX: Removed '-mt-20' to ensure vertical centering */}
           <div className="flex flex-col justify-center py-12">
             <div className="mb-8">
               <h1 className="text-4xl lg:text-5xl font-extrabold text-text-100 leading-tight whitespace-nowrap">
@@ -163,13 +164,12 @@ export default function Home() {
 
             {/* --- SMART STATUS PILL --- */}
             {isVerifying ? (
-              // 1. VERIFYING STATE (Prevents Guest pill flash)
               <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-bg-300 backdrop-blur-sm text-xs md:text-sm text-text-100 shadow-sm w-fit animate-pulse">
                 <Loader2 className="w-4 h-4 text-primary-100 animate-spin" />
                 <span>Verifying your account...</span>
               </div>
             ) : !user ? (
-              // 2. GUEST USER: Standard Pill
+              // GUEST USER
               <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-bg-300 backdrop-blur-sm text-xs md:text-sm text-text-100 shadow-sm w-fit">
                 <Info className="w-4 h-4 text-primary-100" />
                 <span>
@@ -184,7 +184,7 @@ export default function Home() {
                 </span>
               </div>
             ) : (
-              // 3. LOGGED IN USER: "Welcome Back" Pill
+              // LOGGED IN USER
               <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-bg-300 backdrop-blur-sm text-xs md:text-sm text-text-100 shadow-sm w-fit animate-in fade-in slide-in-from-bottom-2">
                 <LayoutDashboard className="w-4 h-4 text-primary-100" />
                 <span>
@@ -282,7 +282,6 @@ export default function Home() {
 
       {/* --- FEATURES SECTION --- */}
       <div className="w-full bg-white py-16 rounded-t-[4rem] shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.05)] z-20 relative">
-        {/* BACKGROUND DECORATIONS */}
         <div className="absolute top-20 left-20 opacity-[0.03] text-primary-100 pointer-events-none">
           <GraduationCap className="w-80 h-80 -rotate-12" />
         </div>
@@ -290,7 +289,6 @@ export default function Home() {
           <Calculator className="w-64 h-64 rotate-12" />
         </div>
 
-        {/* CONTENT GRID */}
         <div className="max-w-[1600px] mx-auto px-6 md:px-20 lg:px-32 relative z-30">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-extrabold text-text-100 mb-4 tracking-tight">
@@ -302,30 +300,22 @@ export default function Home() {
             </p>
           </div>
 
-          {/* 2x2 GRID LAYOUT */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-            {/* Card 1: Cloud & Privacy */}
             <FeatureCard
               icon={<ShieldCheck className="h-10 w-10" />}
               title="Cloud Sync & Privacy"
               description="Create an account to unlock the Dashboard and enable auto-saving across devices. Your academic data is encrypted, strictly private, and accessible only by you—ensuring your records are safe and permanent."
             />
-
-            {/* Card 2: Academic Record */}
             <FeatureCard
               icon={<BookOpen className="h-10 w-10" />}
               title="Smart Calculation Engine"
               description="Input your grades to get an instant GPA calculation. Toggle between 'Day Scholar' and 'Cadet' modes to filter Military subjects automatically. We handle complex logic like Repeat caps (max 2.0) and Medicals (uncapped) for you."
             />
-
-            {/* Card 3: Strategist */}
             <FeatureCard
               icon={<Target className="h-10 w-10" />}
               title="Goal & Performance Analysis"
               description="Stop guessing. Select your target degree class (e.g., First Class), and we calculate exactly what grades you need next. We also categorize your past modules to visualize exactly which subject fields are your strengths or weaknesses."
             />
-
-            {/* Card 4: Dashboard */}
             <FeatureCard
               icon={<LayoutDashboard className="h-10 w-10" />}
               title="Visual Intelligence"

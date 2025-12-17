@@ -29,6 +29,7 @@ import {
   Info,
   RefreshCcw,
   Stethoscope,
+  Search, // Added Search icon for empty state
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import api from "../api/axios";
@@ -200,11 +201,14 @@ export default function Dashboard() {
       const name = localStorage.getItem("user_name");
       if (name) setUserName(name.split(" ")[0]);
 
+      // --- CRITICAL FIX START ---
+      // We do NOT redirect here anymore. If ID is missing, we just stop loading.
       const storedDegreeId = localStorage.getItem("selectedDegreeId");
       if (!storedDegreeId) {
-        navigate("/");
-        return;
+        setLoading(false); // Just stop the spinner
+        return; // Exit function so we don't try to fetch with 'null'
       }
+      // --- CRITICAL FIX END ---
 
       try {
         const modulesRes = await api.get(`/degrees/${storedDegreeId}/modules`);
@@ -217,11 +221,8 @@ export default function Dashboard() {
 
         if (cloudGrades) {
           cloudGrades.forEach((g: any) => {
-            // FIX: Prioritize actual grade if available, even for repeats
             if (g.is_repeat) {
               repeatsMap[g.module_id] = true;
-              // If there is a grade (e.g. "C"), use it so GPA calculates.
-              // If not, use "REPEAT" so UI knows it's pending.
               gradesMap[g.module_id] = g.grade ? g.grade : "REPEAT";
             } else if (g.grade === "MC") {
               gradesMap[g.module_id] = "MC";
@@ -322,7 +323,6 @@ export default function Dashboard() {
     let total = 0;
     allModules.forEach((m) => {
       total += m.credits;
-      // Only count if grade exists and is not a placeholder (MC/REPEAT)
       if (
         grades[m.id] &&
         grades[m.id] !== "MC" &&
@@ -339,6 +339,7 @@ export default function Dashboard() {
     };
   }, [allModules, grades]);
 
+  // --- LOADER ---
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-100">
@@ -347,6 +348,35 @@ export default function Dashboard() {
     );
   }
 
+  // --- CRITICAL FIX: EMPTY STATE ---
+  // If we stopped loading but found no modules (because no degree selected)
+  if (!loading && allModules.length === 0) {
+    return (
+      <div className="min-h-screen bg-bg-100 font-sans relative flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-0 bg-bg-100 bg-grid-pattern animate-grid pointer-events-none"></div>
+        <div className="relative z-10 bg-white p-8 rounded-3xl shadow-xl border border-primary-100/20 max-w-md text-center">
+          <div className="bg-primary-100/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Search className="w-8 h-8 text-primary-100" />
+          </div>
+          <h2 className="text-2xl font-bold text-text-100 mb-2">
+            No Degree Selected
+          </h2>
+          <p className="text-text-200 mb-6 leading-relaxed">
+            Please select your degree from the Home page to view your academic
+            insights.
+          </p>
+          <Button
+            onClick={() => navigate("/")}
+            className="w-full h-12 rounded-xl text-base font-bold bg-primary-100 hover:bg-primary-200 shadow-lg shadow-primary-100/20"
+          >
+            Go to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- MAIN DASHBOARD RENDER ---
   return (
     <div className="min-h-screen bg-bg-100 font-sans relative pb-20">
       <div className="fixed inset-0 z-0 bg-bg-100 bg-grid-pattern animate-grid pointer-events-none"></div>
