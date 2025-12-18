@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 
-// This hook delays updating a value until a specified time has passed
-// This prevents the app from spamming the database while the user is still clicking
+// This hook delays updating a value prevents spamming
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
 

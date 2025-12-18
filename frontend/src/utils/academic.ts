@@ -1,4 +1,3 @@
-// src/utils/academic.ts
 
 export const GRADE_SCALE: Record<string, number> = {
   "A+": 4.0, A: 4.0, "A-": 3.7,
@@ -6,7 +5,7 @@ export const GRADE_SCALE: Record<string, number> = {
   "C+": 2.3, C: 2.0, "C-": 1.7,
   "D+": 1.3, D: 1.0, 
   "E": 0.0,
-  "REPEAT": 0.0, // Treat "Repeat Exam" selection as 0.00 (Fail)
+  "REPEAT": 0.0,
 };
 
 export const GRADING_SCHEMA = [
@@ -43,16 +42,16 @@ export const calculateGPA = (
   let totalCredits = 0;
 
   allModules.forEach((mod) => {
-    // 1. SKIP IF NON-GPA
+    // SKIP IF NON-GPA
     if (isNonGpaModule(mod.is_gpa)) return;
 
     const grade = grades[mod.id];
     const isRepeat = repeats[mod.id];
 
-    // 2. SKIP IF MEDICAL
+    // SKIP IF MEDICAL
     if (grade === "MC") return;
 
-    // 3. CALCULATE IF VALID GRADE (Includes "REPEAT" as 0.0)
+    // CALCULATE IF VALID GRADE (Includes "REPEAT" as 0.0)
     if (grade && GRADE_SCALE[grade] !== undefined) {
       let points = GRADE_SCALE[grade];
       
@@ -132,20 +131,19 @@ export const calculateMaxPossibleGPA = (
     const grade = grades[mod.id];
     const isRepeat = repeats[mod.id];
 
-    // Case A: Completed Module (Use actual score)
-    // Note: We check if grade is valid AND it's not just the "REPEAT" placeholder
+    // Completed Module (Use actual score)
     if (grade && grade !== "MC" && grade !== "REPEAT" && GRADE_SCALE[grade] !== undefined) {
       let points = GRADE_SCALE[grade];
       if (isRepeat) points = Math.min(points, 2.0);
       currentPoints += points * mod.credits;
     } 
-    // Case B: Pending Repeat (Assumes user passes, but MAX is 2.0)
+    // Pending Repeat (Assumes user pass, but MAX is 2.0)
     else if (isRepeat || grade === "REPEAT") {
       currentPoints += 2.0 * mod.credits;
     }
-    // Case C: Future Module / Medical (Assumes user gets A+ / 4.0)
+    // Future Module / Medical (Assumes user gets A+ / 4.0)
     else {
-      currentPoints += 4.0 * mod.credits; // CHANGED to 4.0 as requested
+      currentPoints += 4.0 * mod.credits;
     }
     
     totalCredits += mod.credits;

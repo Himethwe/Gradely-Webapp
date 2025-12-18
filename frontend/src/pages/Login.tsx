@@ -32,7 +32,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // --- HANDLER: LOGIN & SIGN UP ---
+  //HANDLER LOGIN & SIGN UP
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -61,7 +61,7 @@ export default function Login() {
         localStorage.setItem("access_token", result.session.access_token);
       }
 
-      // FIX: Redirect to HOME Page (as logged in user)
+      //Redirect to HOME Page (as logged in user)
       navigate("/");
     } catch (err: any) {
       console.error(err);
@@ -71,14 +71,14 @@ export default function Login() {
     }
   };
 
-  // --- HANDLER: FORGOT PASSWORD ---
+  //HANDLER: FORGOT PASSWORD
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      // FIX: Redirect to the specific Update Password page
+      //Redirect to the Update Password page
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/update-password`,
       });

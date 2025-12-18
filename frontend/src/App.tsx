@@ -14,15 +14,13 @@ import Dashboard from "./pages/Dashboard";
 import AcademicRecord from "./pages/AcademicRecord";
 import Strategist from "./pages/Strategist";
 
-// Use 'import type' for TypeScript
 import type { User } from "@supabase/supabase-js";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
 
-  // --- AUTH LISTENER ---
+  //AUTH LISTENER
   useEffect(() => {
-    // 1. Initial Check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session) {
@@ -36,7 +34,7 @@ function App() {
       }
     });
 
-    // 2. Real-time Subscription
+    //Real-time Subscription
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -53,18 +51,13 @@ function App() {
       }
 
       if (event === "SIGNED_OUT") {
-        // --- CRITICAL FIX START ---
-        // Do NOT use localStorage.clear() because it deletes the selected Degree info.
-        // Only remove the items related to Authentication.
         localStorage.removeItem("access_token");
         localStorage.removeItem("user_name");
-        localStorage.removeItem("sb-access-token"); // Remove Supabase internal token if present
+        localStorage.removeItem("sb-access-token");
         localStorage.removeItem("sb-refresh-token");
 
-        // We purposefully leave 'selectedDegreeId' and 'selectedDegreeName'
-        // in local storage so the next login remembers the preference.
+        //leave 'selectedDegreeId' and 'selectedDegreeName' for next login to remember
         setUser(null);
-        // --- CRITICAL FIX END ---
       }
     });
 
@@ -76,7 +69,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Pass 'user' to Layout so Navbar updates instantly */}
         <Route element={<Layout user={user} />}>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />

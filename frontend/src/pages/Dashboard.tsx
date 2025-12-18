@@ -29,7 +29,7 @@ import {
   Info,
   RefreshCcw,
   Stethoscope,
-  Search, // Added Search icon for empty state
+  Search,
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import api from "../api/axios";
@@ -54,7 +54,7 @@ interface Module {
   category: string;
 }
 
-// --- RECOVERY ZONE COMPONENT ---
+//RECOVERY ZONE COMPONENT
 const RecoveryZone = ({
   modules,
   grades,
@@ -64,9 +64,9 @@ const RecoveryZone = ({
   grades: Record<number, string>;
   repeats: Record<number, boolean>;
 }) => {
-  // 1. Filter for ACTIVE issues only
+  //Filter for ACTIVE issues only
 
-  // Pending Repeats: Flag is true, but grade is missing or just a placeholder
+  // Pending Repeats
   const pendingRepeats = modules.filter((m) => {
     const isRep = repeats[m.id];
     const g = grades[m.id];
@@ -178,7 +178,7 @@ export default function Dashboard() {
   const [selectedSem, setSelectedSem] = useState(1);
   const [drillDownSem, setDrillDownSem] = useState<string | null>(null);
 
-  // --- NEW: Mobile Detection State ---
+  //Mobile Detection State
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -187,7 +187,7 @@ export default function Dashboard() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // --- 1. DATA FETCHING ---
+  //DATA FETCHING
   useEffect(() => {
     const loadDashboard = async () => {
       const {
@@ -201,14 +201,12 @@ export default function Dashboard() {
       const name = localStorage.getItem("user_name");
       if (name) setUserName(name.split(" ")[0]);
 
-      // --- CRITICAL FIX START ---
-      // We do NOT redirect here anymore. If ID is missing, we just stop loading.
+      //If ID is missing, just stop loading.
       const storedDegreeId = localStorage.getItem("selectedDegreeId");
       if (!storedDegreeId) {
-        setLoading(false); // Just stop the spinner
-        return; // Exit function so we don't try to fetch with 'null'
+        setLoading(false);
+        return;
       }
-      // --- CRITICAL FIX END ---
 
       try {
         const modulesRes = await api.get(`/degrees/${storedDegreeId}/modules`);
@@ -258,7 +256,7 @@ export default function Dashboard() {
     loadDashboard();
   }, [navigate]);
 
-  // --- 2. CALCULATIONS ---
+  //CALCULATIONS
   const currentGPA = useMemo(
     () => calculateGPA(allModules, grades, repeats),
     [allModules, grades, repeats]
@@ -339,7 +337,7 @@ export default function Dashboard() {
     };
   }, [allModules, grades]);
 
-  // --- LOADER ---
+  //LOADER
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-100">
@@ -348,8 +346,6 @@ export default function Dashboard() {
     );
   }
 
-  // --- CRITICAL FIX: EMPTY STATE ---
-  // If we stopped loading but found no modules (because no degree selected)
   if (!loading && allModules.length === 0) {
     return (
       <div className="min-h-screen bg-bg-100 font-sans relative flex items-center justify-center p-4">
@@ -376,7 +372,7 @@ export default function Dashboard() {
     );
   }
 
-  // --- MAIN DASHBOARD RENDER ---
+  //MAIN DASHBOARD RENDER
   return (
     <div className="min-h-screen bg-bg-100 font-sans relative pb-20">
       <div className="fixed inset-0 z-0 bg-bg-100 bg-grid-pattern animate-grid pointer-events-none"></div>
@@ -387,7 +383,7 @@ export default function Dashboard() {
         path:focus { outline: none !important; }
       `}</style>
 
-      {/* --- HEADER --- */}
+      {/*HEADER*/}
       <div className="mx-auto max-w-7xl px-4 mt-4 transition-all duration-300">
         <div className="bg-gradient-to-r from-white via-primary-100/10 to-white backdrop-blur-md rounded-3xl border-2 border-primary-100/40 shadow-sm hover:shadow-md px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex-1">
@@ -414,9 +410,9 @@ export default function Dashboard() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10 space-y-8">
-        {/* === ZONE 1: THE PULSE === */}
+        {/*ZONE 1: THE PULSE*/}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Current GPA */}
+          {/* Card Current GPA */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-primary-100/40 relative overflow-hidden flex flex-col justify-between h-40 group hover:shadow-md transition-all">
             <div>
               <div className="flex items-center gap-2 text-[14px] font-bold text-text-100 uppercase tracking-widest mb-1">
@@ -439,7 +435,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Card 2: Progress (Blue Gradient) */}
+          {/* Card Progress (Blue Gradient) */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-primary-100/40 flex items-center justify-between h-40 group hover:shadow-md transition-all">
             <div>
               <div className="text-[13px] font-bold text-text-100 uppercase tracking-widest mb-1">
@@ -495,7 +491,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Card 3: Ceiling (Max Potential) */}
+          {/* Card Ceiling (Max Potential) */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-primary-100/40 relative overflow-hidden flex flex-col justify-between h-40 group hover:shadow-md transition-all">
             <div>
               <div className="flex items-center gap-2 text-[13px] font-bold text-text-100 uppercase tracking-widest mb-1">
@@ -516,9 +512,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* === ZONE 2: FUTURE TERRAIN === */}
+        {/*ZONE 2: FUTURE TERRAIN*/}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* LEFT: TABBED ROADMAP */}
+          {/*TABBED ROADMAP */}
           <div className="lg:col-span-7 bg-white rounded-2xl border-2 border-primary-100/40 p-6 shadow-sm flex flex-col min-h-[400px]">
             <div className="flex items-center gap-2 mb-6">
               <BookOpen className="w-6 h-6 text-primary-100" />
@@ -618,7 +614,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* RIGHT: INTEL */}
+          {/*INTEL */}
           <div className="lg:col-span-5 bg-white rounded-2xl border-2 border-primary-100/40 p-6 shadow-sm flex flex-col min-h-[400px]">
             <div className="flex items-center gap-2 mb-6">
               <Zap className="w-6 h-6 text-accent-100" />
@@ -732,11 +728,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* === ZONE 3: RECOVERY ZONE (MOVED HERE) === */}
+        {/*ZONE 3: RECOVERY ZONE*/}
         {/* Only appears if you have Pending Repeats or Medicals */}
         <RecoveryZone modules={allModules} grades={grades} repeats={repeats} />
 
-        {/* === ZONE 4: CHART === */}
+        {/*ZONE 4: CHART*/}
         <div className="bg-white rounded-2xl border-2 border-primary-100/40 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div className="flex-1">
@@ -783,7 +779,6 @@ export default function Dashboard() {
 
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                // FIX: If Mobile + Drilled Down, switch to Vertical Layout (Horizontal Bars)
                 layout={isMobile && drillDownSem ? "vertical" : "horizontal"}
                 data={drillDownSem ? drillDownData : trendData}
                 onClick={(state) => {
@@ -798,7 +793,6 @@ export default function Dashboard() {
                   stroke="#f3f4f6"
                 />
                 <XAxis
-                  // FIX: Swap Axes based on layout
                   type={isMobile && drillDownSem ? "number" : "category"}
                   dataKey={isMobile && drillDownSem ? undefined : "name"}
                   axisLine={false}
@@ -806,16 +800,15 @@ export default function Dashboard() {
                   tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 700 }}
                   dy={10}
                   interval={0}
-                  domain={[0, 4]} // Ensure numbers go 0-4
+                  domain={[0, 4]}
                 />
                 <YAxis
-                  // FIX: Swap Axes based on layout
                   type={isMobile && drillDownSem ? "category" : "number"}
                   dataKey={isMobile && drillDownSem ? "name" : undefined}
                   domain={[0, 4]}
                   axisLine={false}
                   tickLine={false}
-                  width={isMobile && drillDownSem ? 100 : 40} // Give more space for text on mobile
+                  width={isMobile && drillDownSem ? 100 : 40}
                   tick={{
                     fill: "#6b7280",
                     fontSize: isMobile && drillDownSem ? 10 : 12,
@@ -831,7 +824,6 @@ export default function Dashboard() {
                   }}
                 />
                 <ReferenceLine
-                  // FIX: If horizontal bars, Ref Line should be X not Y
                   x={isMobile && drillDownSem ? 3.7 : undefined}
                   y={!(isMobile && drillDownSem) ? 3.7 : undefined}
                   stroke="#fbbf24"
@@ -850,7 +842,7 @@ export default function Dashboard() {
                   dataKey={drillDownSem ? "grade" : "gpa"}
                   radius={
                     isMobile && drillDownSem ? [0, 6, 6, 0] : [6, 6, 0, 0]
-                  } // Rotate radius
+                  }
                   barSize={drillDownSem ? 20 : 40}
                   animationDuration={800}
                   style={{ outline: "none" }}

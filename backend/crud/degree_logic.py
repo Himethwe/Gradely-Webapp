@@ -1,12 +1,8 @@
 from database import supabase
 
 def get_all_degrees():
-    """
-    Fetches all available degrees from the database.
-    Used for the 'Select Degree' dropdown on the frontend.
-    """
     try:
-        # SQL Equivalent: SELECT * FROM degrees;
+        # get all degrees
         response = supabase.table("degrees").select("*").execute()
         return response.data
     except Exception as e:
@@ -14,11 +10,8 @@ def get_all_degrees():
         return []
 
 def get_modules_by_degree(degree_id: int):
-    """
-    Fetches the curriculum (modules) for a specific degree.
-    """
     try:
-        # SQL Equivalent: SELECT * FROM modules WHERE degree_id = X;
+        # get degree modules
         response = supabase.table("modules").select("*").eq("degree_id", degree_id).execute()
         return response.data
     except Exception as e:

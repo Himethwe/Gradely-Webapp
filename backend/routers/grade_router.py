@@ -6,22 +6,14 @@ from database import supabase
 
 router = APIRouter()
 
-# ==========================================
-# AUTH DEPENDENCY
-# ==========================================
-# This function runs before every request.
-# 1. It grabs the 'Authorization' header (Bearer ...).
-# 2. It sends the token to Supabase to verify it.
-# 3. It returns the User ID (student_id) if valid.
+# authorize and verify with supabase
 def get_current_user(authorization: str = Header(None)):
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Token")
     
     try:
-        # Extract token from "Bearer <token>"
         token = authorization.split(" ")[1]
         
-        # Verify with Supabase
         user_response = supabase.auth.get_user(token)
         
         if not user_response or not user_response.user:
@@ -33,9 +25,7 @@ def get_current_user(authorization: str = Header(None)):
         print(f"Auth Error: {e}")
         raise HTTPException(status_code=401, detail="Authentication Failed")
 
-# ==========================================
 # ROUTES
-# ==========================================
 
 @router.get("/grades", response_model=List[StudentGrade])
 def read_my_grades(student_id: str = Depends(get_current_user)):

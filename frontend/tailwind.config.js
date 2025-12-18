@@ -6,13 +6,13 @@ export default {
   ],
   theme: {
     extend: {
-      // We extend the font family to make Roboto Condensed the default
+      // roboto condensed default
       fontFamily: {
         sans: ['"Roboto Condensed"', 'sans-serif'],
         handwriting: ['"Shadows Into Light"', 'cursive'],
         serifAccent: ['"Lora"', 'serif'],
       },
-      // We inject your specific color palette here
+      // add color palette
       colors: {
         primary: {
           100: '#0077C2', // Main Brand Blue

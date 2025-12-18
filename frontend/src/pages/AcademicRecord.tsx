@@ -59,11 +59,11 @@ const isNonGpa = (val: any) => {
 export default function AcademicRecord() {
   const navigate = useNavigate();
 
-  // --- STATE ---
+  //STATE
   const [loading, setLoading] = useState(true);
   const [degreeName, setDegreeName] = useState("");
 
-  // NEW: Student Type State (Day Scholar vs Cadet)
+  //Student Type State
   const [studentType, setStudentType] = useState<"day" | "cadet">(() => {
     return (localStorage.getItem("studentType") as "day" | "cadet") || "day";
   });
@@ -71,7 +71,7 @@ export default function AcademicRecord() {
   const [allModules, setAllModules] = useState<Module[]>([]);
   const [curriculum, setCurriculum] = useState<YearGroup[]>([]);
 
-  // Main Status: Now allows null/empty string to represent "Cleared"
+  // Main Status
   const [grades, setGrades] = useState<Record<number, string | null>>({});
   const [suppGrades, setSuppGrades] = useState<Record<number, string>>({});
 
@@ -82,7 +82,7 @@ export default function AcademicRecord() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  // NEW: Toast Notification State
+  //Toast Notification State
   const [toast, setToast] = useState<{ show: boolean; message: string }>({
     show: false,
     message: "",
@@ -91,13 +91,13 @@ export default function AcademicRecord() {
   const debouncedGrades = useDebounce(grades, 1500);
   const debouncedSupp = useDebounce(suppGrades, 1500);
 
-  // --- HANDLER: Toggle Student Type ---
+  //HANDLER: Toggle Student Type
   const toggleStudentType = (type: "day" | "cadet") => {
     setStudentType(type);
     localStorage.setItem("studentType", type);
   };
 
-  // --- INITIAL DATA LOAD ---
+  //INITIAL DATA LOAD
   useEffect(() => {
     const initialize = async () => {
       const storedDegreeId = localStorage.getItem("selectedDegreeId");
@@ -178,10 +178,10 @@ export default function AcademicRecord() {
     if (savedSupp) setSuppGrades(JSON.parse(savedSupp));
   };
 
-  // --- AUTO-SAVE EFFECT ---
+  //AUTO-SAVE EFFECT
   useEffect(() => {
     if (!user) return;
-    // We run this even if keys are empty, to support clearing
+
     if (
       Object.keys(debouncedGrades).length === 0 &&
       Object.keys(debouncedSupp).length === 0
@@ -198,16 +198,16 @@ export default function AcademicRecord() {
           const id = Number(key);
           const mainVal = debouncedGrades[id];
 
-          // 1. Handle Cleared/Empty Values
+          //Handle Cleared/Empty Values
           if (mainVal === null || mainVal === "") {
-            finalGrades[id] = null; // Send null to DB to clear it
+            finalGrades[id] = null;
             finalRepeats[id] = false;
             return;
           }
 
-          // 2. Handle Repeats
+          //Handle Repeats
           if (mainVal === "REPEAT") {
-            // CRITICAL: Always save repeat status, even if grade is empty
+            //Always save repeat status, even if grade is empty
             finalRepeats[id] = true;
             if (debouncedSupp[id]) {
               finalGrades[id] = debouncedSupp[id];
@@ -216,7 +216,7 @@ export default function AcademicRecord() {
               finalGrades[id] = "REPEAT_PENDING";
             }
           }
-          // 3. Handle Medicals
+          //Handle Medicals
           else if (mainVal === "MC") {
             if (debouncedSupp[id]) {
               finalGrades[id] = debouncedSupp[id];
@@ -226,7 +226,7 @@ export default function AcademicRecord() {
               finalRepeats[id] = false;
             }
           }
-          // 4. Normal Grades
+          //Normal Grades
           else {
             finalGrades[id] = mainVal;
             finalRepeats[id] = false;
@@ -245,9 +245,9 @@ export default function AcademicRecord() {
     performAutoSave();
   }, [debouncedGrades, debouncedSupp, user]);
 
-  // --- GPA CALCULATION (Filtered) ---
+  //GPA CALCULATION
   const currentGPA = useMemo(() => {
-    // 1. Filter modules: If Day Scholar, exclude 'Military' category
+    //If Day Scholar, exclude 'Military' category
     const relevantModules = allModules.filter((m) =>
       studentType === "cadet" ? true : m.category !== "Military"
     );
@@ -259,14 +259,14 @@ export default function AcademicRecord() {
       const id = Number(key);
       const status = grades[id];
 
-      if (!status) return; // Skip nulls
+      if (!status) return;
 
       if (status === "REPEAT") {
         effectiveRepeats[id] = true;
         if (suppGrades[id]) {
           effectiveGrades[id] = suppGrades[id];
         } else {
-          // FIX: explicitly treat as "REPEAT" (0.00) if no supplementary grade
+          //treat as "REPEAT" (0.00) if no supplementary grade
           effectiveGrades[id] = "REPEAT";
         }
       } else if (status === "MC") {
@@ -281,9 +281,9 @@ export default function AcademicRecord() {
     });
 
     return calculateGPA(relevantModules, effectiveGrades, effectiveRepeats);
-  }, [grades, suppGrades, allModules, studentType]); // Added studentType
+  }, [grades, suppGrades, allModules, studentType]);
 
-  // --- HANDLERS ---
+  //HANDLERS
   const handleMainStatusChange = (moduleId: number, value: string) => {
     // If clearing (value === ""), set to null so AutoSave detects it
     const valToStore = value === "" ? null : value;
@@ -322,8 +322,7 @@ export default function AcademicRecord() {
 
     yearGroup.semesters.forEach((sem) => {
       sem.modules.forEach((mod) => {
-        // Crucial: Set to NULL, do not delete key.
-        // This tells AutoSave "Please update this row to be empty"
+        // Set to NULL,to not delete key.
         updatedGrades[mod.id] = null;
         delete updatedSupp[mod.id];
       });
@@ -332,14 +331,11 @@ export default function AcademicRecord() {
     setGrades(updatedGrades);
     setSuppGrades(updatedSupp);
 
-    // Trigger Auto-Save immediately or rely on effect
-    // Because object reference changed, effect will trigger.
     if (user) setSaveStatus("saving");
   };
 
   const gpaPercentage = (parseFloat(currentGPA) / 4.0) * 100;
 
-  // Filter Supplementary modules based on student type too
   const supplementaryModules = allModules
     .filter((m) => (studentType === "cadet" ? true : m.category !== "Military"))
     .filter((m) => grades[m.id] === "REPEAT" || grades[m.id] === "MC");
@@ -413,14 +409,13 @@ export default function AcademicRecord() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              {/* FIX: Removed 'truncate' so long degree names wrap on mobile */}
               <h1 className="text-lg md:text-xl font-bold font-sans text-text-100 flex items-center gap-2 leading-tight">
                 <GraduationCap className="hidden md:block h-6 w-6 text-primary-100" />
                 {degreeName}
               </h1>
             </div>
 
-            {/* CENTER: Student Type Toggle (Desktop) */}
+            {/*Student Type Toggle*/}
             <div className="hidden md:flex bg-bg-200 p-1 rounded-full border border-bg-300">
               <button
                 onClick={() => toggleStudentType("day")}
@@ -444,7 +439,7 @@ export default function AcademicRecord() {
               </button>
             </div>
 
-            {/* RIGHT: Status / Sync Indicator (DESKTOP ONLY) */}
+            {/*Status / Sync Indicator*/}
             <div className="hidden md:block flex-shrink-0">
               {!user ? (
                 <button
@@ -477,11 +472,8 @@ export default function AcademicRecord() {
             </div>
           </div>
 
-          {/* ======================================================== */}
           {/* MOBILE ONLY: Student Type + GPA BAR + SYNC ROW           */}
-          {/* ======================================================== */}
           <div className="md:hidden mt-4 pt-3 border-t border-primary-100/10 space-y-3">
-            {/* Mobile Student Toggle (FIX: w-max mx-auto for compact size) */}
             <div className="flex bg-bg-200 p-0.5 rounded-lg border border-bg-300 w-max mx-auto">
               <button
                 onClick={() => toggleStudentType("day")}
@@ -506,7 +498,7 @@ export default function AcademicRecord() {
             </div>
 
             <div className="flex items-center justify-between">
-              {/* LEFT: GPA (FIX: Prominent Big Text) */}
+              {/*GPA */}
               <div className="flex flex-col justify-center">
                 <span className="text-[10px] uppercase font-bold text-text-200 tracking-wider mb-[-4px]">
                   Current GPA
@@ -516,7 +508,7 @@ export default function AcademicRecord() {
                 </span>
               </div>
 
-              {/* RIGHT: Compact Action Button (Restored) */}
+              {/*Compact Action Button*/}
               {!user ? (
                 <button
                   onClick={() => setShowAuthModal(true)}
@@ -537,14 +529,13 @@ export default function AcademicRecord() {
               )}
             </div>
           </div>
-          {/* ======================================================== */}
         </div>
       </div>
 
       {/* MAIN CONTENT */}
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* LEFT: MODULES */}
+          {/*MODULES */}
           <div className="lg:col-span-8 space-y-8">
             {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200 shadow-sm">
@@ -598,7 +589,6 @@ export default function AcademicRecord() {
                               return (
                                 <div
                                   key={module.id}
-                                  // FIX 1: Responsive Flex - Column on Mobile, Row on Desktop
                                   className="group p-4 bg-white rounded-xl border border-bg-300 hover:border-primary-100 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4"
                                 >
                                   <div className="flex-grow min-w-0 w-full md:w-auto">
@@ -627,7 +617,7 @@ export default function AcademicRecord() {
                                           e.target.value
                                         )
                                       }
-                                      // FIX 2: Full width select on mobile, fixed on desktop
+                                      //Full width select on mobile, fixed on desktop
                                       className={`
                                         appearance-none w-full md:w-32 h-10 text-center font-bold text-sm rounded-lg border-2 cursor-pointer transition-all outline-none focus:ring-2 focus:ring-offset-1
                                         ${
@@ -667,7 +657,7 @@ export default function AcademicRecord() {
                       );
                     })}
 
-                    {/* --- SUPPLEMENTARY EXAMS SECTION (PER YEAR) --- */}
+                    {/*SUPPLEMENTARY EXAMS SECTION (PER YEAR)*/}
                     {yearRepeats.length > 0 && (
                       <div className="mt-8 pt-6 border-t-2 border-slate-100 animate-in fade-in slide-in-from-top-2">
                         <div className="flex items-center gap-3 mb-4">
@@ -694,7 +684,6 @@ export default function AcademicRecord() {
                                     <span className="text-text-200">
                                       Sem {module.semester}
                                     </span>
-                                    {/* FIX 3: Added Category Label Here */}
                                     <span className="text-text-200 border-l border-slate-300 pl-2">
                                       {module.category}
                                     </span>
@@ -766,7 +755,7 @@ export default function AcademicRecord() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: STICKY SIDEBAR (Desktop) */}
+          {/*STICKY SIDEBAR*/}
           <div className="hidden lg:block lg:col-span-4 space-y-6">
             <div className="sticky top-32 space-y-6">
               {/* GPA CARD */}

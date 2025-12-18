@@ -4,10 +4,8 @@ from routers import degree_router, grade_router
 
 app = FastAPI(title="UniStat API")
 
-# ===========================
-# 1. SECURITY CONFIG (CORS)
-# ===========================
-origins = ["*"]  # CHANGED: Allow ALL origins (Vercel, Localhost, etc.)
+#cors
+origins = ["*"]  #allow all origins
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,12 +15,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ===========================
-# 2. INCLUDE ROUTERS
-# ===========================
+
 app.include_router(degree_router.router, tags=["Degrees"])
 app.include_router(grade_router.router, tags=["Grades"])
 
 @app.get("/")
 def read_root():
-    return {"message": "UniStat Backend is Live! 🚀"}
+    return {"message": "UniStat Backend is Live!"}

@@ -13,7 +13,6 @@ import {
 import { logoutUser } from "../api/auth";
 import { Button } from "./ui/Button";
 
-// --- FIX: Use 'import type' here too ---
 import type { User } from "@supabase/supabase-js";
 
 // Define Props
@@ -26,7 +25,7 @@ const Layout = ({ user }: LayoutProps) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Helper: Active link styles
+  // Helper
   const isActiveDesktop = (path: string) =>
     location.pathname === path
       ? "text-primary-100 border-primary-100"
@@ -45,7 +44,6 @@ const Layout = ({ user }: LayoutProps) => {
     setIsMenuOpen(false);
   };
 
-  // --- LOGIC: Check the 'user' prop directly ---
   const isGuest = !user;
   const userName = user?.user_metadata?.full_name || "Student";
 

@@ -83,24 +83,24 @@ interface Module {
 export default function Strategist() {
   const navigate = useNavigate();
 
-  // --- STATE ---
+  //STATE
   const [loading, setLoading] = useState(true);
   const [allModules, setAllModules] = useState<Module[]>([]);
   const [grades, setGrades] = useState<Record<number, string>>({});
   const [suppGrades, setSuppGrades] = useState<Record<number, string>>({});
   const [targetGPA, setTargetGPA] = useState<number>(3.7);
 
-  // Student Type for filtering (Day vs Cadet)
+  // Student Type for filtering
   const [studentType, _setStudentType] = useState<"day" | "cadet">(() => {
     return (localStorage.getItem("studentType") as "day" | "cadet") || "day";
   });
 
-  // --- SCROLL TO TOP ON MOUNT ---
+  //SCROLL TO TOP ON MOUNT
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // --- DATA LOADING LOGIC ---
+  //DATA LOADING LOGIC
   useEffect(() => {
     const storedDegreeId = localStorage.getItem("selectedDegreeId");
     // Check if user is logged in
@@ -114,7 +114,7 @@ export default function Strategist() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1. Fetch Modules (Always needed)
+        // 1. Fetch Modules
         const modulesResponse = await api.get(
           `/degrees/${storedDegreeId}/modules`
         );
@@ -125,20 +125,16 @@ export default function Strategist() {
           // A. LOGGED IN USER: Fetch from Database
           const gradesResponse = await api.get("/grades");
 
-          // Convert DB array to the Record<number, string> format
           const dbGrades: Record<number, string> = {};
           const dbSupp: Record<number, string> = {};
 
           gradesResponse.data.forEach((g: any) => {
             if (g.is_repeat) {
-              // FIX: Only add to suppGrades if it is a REAL grade, NOT "REPEAT_PENDING"
-              // This ensures unresolved repeats fall through to the "REPEAT" (0.00) logic
               if (g.grade && g.grade !== "REPEAT_PENDING") {
                 dbSupp[g.module_id] = g.grade;
               }
 
               // Ensure main grade map knows it's a repeat
-              // We check !dbGrades[id] to avoid overwriting if duplicate rows exist (edge case)
               if (!dbGrades[g.module_id]) {
                 dbGrades[g.module_id] = "REPEAT";
               }
@@ -166,7 +162,7 @@ export default function Strategist() {
     fetchData();
   }, [navigate]);
 
-  // --- HELPER: Convert Number back to Letter Grade ---
+  //HELPER Convert Number back to Letter Grade
   const getClosestGrade = (gpa: number) => {
     if (gpa > 4.0) return "Requires > 4.0";
     if (gpa < 0) return "Target Secured";
@@ -186,14 +182,14 @@ export default function Strategist() {
     return closestGrade;
   };
 
-  // --- CORE LOGIC ---
+  //CORE LOGIC
   const stats = useMemo(() => {
-    // Filter Modules
+    //Filter Modules
     const relevantModules = allModules.filter((m) =>
       studentType === "cadet" ? true : m.category !== "Military"
     );
 
-    // Construct Effective Grades
+    //Construct Effective Grades
     const effectiveRepeats: Record<number, boolean> = {};
     const effectiveGrades: Record<number, string> = {};
 
@@ -205,12 +201,11 @@ export default function Strategist() {
 
       if (status === "REPEAT") {
         effectiveRepeats[id] = true;
-        // Since we filtered out "REPEAT_PENDING" in fetch,
-        // suppGrades[id] will be undefined if no real grade exists.
+
         if (suppGrades[id]) {
           effectiveGrades[id] = suppGrades[id];
         } else {
-          effectiveGrades[id] = "REPEAT"; // This triggers 0.00 in calculateGPA
+          effectiveGrades[id] = "REPEAT";
         }
       } else if (status === "MC") {
         if (suppGrades[id]) {
@@ -231,7 +226,7 @@ export default function Strategist() {
     );
     const currentGPA = parseFloat(currentGPAString);
 
-    // --- CHART & TREND DATA GENERATION ---
+    //CHART & TREND DATA GENERATION
     let completedCredits = 0;
     let remainingCredits = 0;
 
@@ -251,7 +246,6 @@ export default function Strategist() {
       const grade = effectiveGrades[mod.id];
       const isRepeat = effectiveRepeats[mod.id];
 
-      // Skip MC (Medical) from calculations unless resolved
       if (grade === "MC") {
         remainingCredits += mod.credits;
         return;
@@ -265,7 +259,7 @@ export default function Strategist() {
         let points = 0;
 
         if (isUnresolvedRepeat) {
-          points = 0.0; // Fail counts as 0 points
+          points = 0.0;
         } else {
           points = GRADE_SCALE[grade];
           // Cap repeats at 2.0 (C)
@@ -274,7 +268,6 @@ export default function Strategist() {
 
         completedCredits += mod.credits;
 
-        // Update Charts Data
         const cat = mod.category || "General";
         if (!categoryMap[cat]) categoryMap[cat] = { total: 0, count: 0 };
         categoryMap[cat].total += points;
@@ -304,8 +297,7 @@ export default function Strategist() {
     });
 
     const totalCredits = completedCredits + remainingCredits;
-    // Use the calculated GPA to back-calculate total points
-    // This ensures alignment between the GPA Card and the "Target" logic
+
     const currentPoints = currentGPA * completedCredits;
 
     const totalPointsNeeded = targetGPA * totalCredits;
@@ -398,7 +390,7 @@ export default function Strategist() {
     <div className="min-h-screen bg-bg-100 font-sans relative">
       <div className="fixed inset-0 z-0 bg-bg-100 bg-grid-pattern animate-grid pointer-events-none"></div>
 
-      {/* --- HEADER --- */}
+      {/*HEADER*/}
       <div className="sticky top-4 z-40 mx-auto max-w-7xl px-4 transition-all duration-300 hover:-translate-y-1">
         <div className="bg-gradient-to-r from-white via-primary-100/10 to-white backdrop-blur-md rounded-3xl border border-primary-100/20 shadow-sm hover:shadow-md px-6 py-4 flex items-center justify-between">
           <div>
@@ -418,11 +410,11 @@ export default function Strategist() {
         </div>
       </div>
 
-      {/* --- MAIN CONTENT --- */}
+      {/*MAIN CONTENT*/}
       <main className="max-w-7xl mx-auto px-4 py-4 lg:py-8 relative z-10 space-y-6 lg:space-y-8 pb-32">
-        {/* 1. TOP SECTION: TARGET & STATS */}
+        {/*TARGET & STATS */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-          {/* LEFT: TARGET SELECTION CARD */}
+          {/* TARGET SELECTION CARD */}
           <div className="lg:col-span-7 bg-white rounded-2xl p-6 lg:p-8 shadow-md border border-primary-100/40 text-center relative overflow-hidden flex flex-col justify-between">
             <div className="relative z-10">
               <div className="bg-primary-100/5 rounded-2xl py-8 mb-8 border border-primary-100/30">
@@ -510,9 +502,9 @@ export default function Strategist() {
             </div>
           </div>
 
-          {/* RIGHT: STATS COLUMN */}
+          {/*STATS COLUMN */}
           <div className="lg:col-span-5 flex flex-col gap-4">
-            {/* 1. VERDICT CARD */}
+            {/*VERDICT CARD */}
             {stats.isDegreeComplete ? (
               <div
                 className={`rounded-2xl p-6 shadow-lg border relative overflow-hidden flex-1 flex flex-col justify-center transition-all duration-300 ${
@@ -583,7 +575,7 @@ export default function Strategist() {
               </div>
             )}
 
-            {/* 2. CURRENT STATUS */}
+            {/*CURRENT STATUS */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-primary-100/40 flex-1 flex flex-col justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
               <div className="flex items-center gap-2 mb-2 text-primary-100">
                 <Calculator className="h-5 w-5" />
@@ -599,7 +591,7 @@ export default function Strategist() {
               </div>
             </div>
 
-            {/* 3. WORK CARD */}
+            {/*WORK CARD */}
             {stats.isDegreeComplete ? (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-primary-100/40 flex-1 flex flex-col justify-center transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
                 <div className="flex items-center gap-2 mb-2 text-primary-100">
@@ -634,7 +626,7 @@ export default function Strategist() {
           </div>
         </div>
 
-        {/* --- 2. FIELD MASTERY & INSIGHTS --- */}
+        {/*FIELD MASTERY & INSIGHTS*/}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* RADAR CHART */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-primary-100/40 flex flex-col items-center">
@@ -762,7 +754,7 @@ export default function Strategist() {
           </div>
         </div>
 
-        {/* --- 3. PERFORMANCE TREND --- */}
+        {/*PERFORMANCE TREND*/}
         <div className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-primary-100/40">
           <div className="mb-6">
             <h3 className="font-bold text-[22px] text-text-100 flex items-center gap-2">
@@ -831,7 +823,7 @@ export default function Strategist() {
                     }}
                   />
 
-                  {/* FIX 2: Black Outline Removal */}
+                  {/*Black Outline Removal from chart */}
                   <Bar
                     dataKey="gpa"
                     radius={[6, 6, 0, 0]}

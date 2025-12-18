@@ -34,7 +34,6 @@ export default function Home() {
   const [error, setError] = useState("");
   const [user, setUser] = useState<any>(null);
 
-  // Track if we are currently processing a magic link login
   const [isVerifying, setIsVerifying] = useState(false);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -53,7 +52,7 @@ export default function Home() {
     }
   }, []);
 
-  // --- AUTH LISTENER ---
+  //AUTH LISTENER
   useEffect(() => {
     if (window.location.hash && window.location.hash.includes("access_token")) {
       setIsVerifying(true);
@@ -76,14 +75,14 @@ export default function Home() {
     };
   }, []);
 
-  // --- Degree Data ---
+  //Degree Data
   useEffect(() => {
     const savedId = localStorage.getItem("selectedDegreeId");
     if (degrees.length > 0 && savedId) {
       const foundDegree = degrees.find((d) => d.id.toString() === savedId);
       if (foundDegree) {
         setSelectedDegree(foundDegree);
-        setSearchTerm(foundDegree.name); // Ensure search box shows the saved name
+        setSearchTerm(foundDegree.name);
       }
     }
   }, [degrees]);
@@ -107,14 +106,12 @@ export default function Home() {
     degree.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // --- CRITICAL FIX: Save to Storage IMMEDIATELY on selection ---
+  //Save to Storage directly on selection
   const handleSelectDegree = (degree: Degree) => {
     setSelectedDegree(degree);
     setSearchTerm(degree.name);
     setIsDropdownOpen(false);
 
-    // This ensures that even if they click "Dashboard" in the Nav immediately,
-    // the app knows which degree they are talking about.
     localStorage.setItem("selectedDegreeId", degree.id.toString());
     localStorage.setItem("selectedDegreeName", degree.name);
   };
@@ -123,13 +120,10 @@ export default function Home() {
     setSearchTerm("");
     setSelectedDegree(null);
     setIsDropdownOpen(true);
-    // We do NOT clear localStorage here to prevent the Dashboard
-    // from crashing if the user just wanted to search for something else.
   };
 
   const handleStartGuestMode = () => {
     if (selectedDegree) {
-      // (Redundant safety save, but good to keep)
       localStorage.setItem("selectedDegreeId", selectedDegree.id.toString());
       localStorage.setItem("selectedDegreeName", selectedDegree.name);
       navigate("/planner");
@@ -138,10 +132,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col font-sans relative min-h-[calc(100vh-4rem)] overflow-x-hidden">
-      {/* --- BACKGROUND: ANIMATED GRID --- */}
+      {/*BACKGROUND: ANIMATED GRID*/}
       <div className="fixed inset-0 z-0 bg-bg-100 bg-grid-pattern animate-grid pointer-events-none"></div>
 
-      {/* --- HERO SECTION --- */}
+      {/*HERO SECTION*/}
       <main className="relative w-full flex items-center min-h-[600px] overflow-visible z-30 pb-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 w-full grid lg:grid-cols-2 gap-12 items-center relative">
           {/* LEFT COLUMN */}
@@ -162,7 +156,7 @@ export default function Home() {
               classification.
             </p>
 
-            {/* --- SMART STATUS PILL --- */}
+            {/*SMART STATUS PILL*/}
             {isVerifying ? (
               <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 border border-bg-300 backdrop-blur-sm text-xs md:text-sm text-text-100 shadow-sm w-fit animate-pulse">
                 <Loader2 className="w-4 h-4 text-primary-100 animate-spin" />
@@ -200,7 +194,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* --- SEARCH ROW --- */}
+            {/*SEARCH ROW*/}
             <div
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 relative z-[50] max-w-2xl w-full"
               ref={searchRef}
@@ -280,7 +274,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* --- FEATURES SECTION --- */}
+      {/*FEATURES SECTION*/}
       <div className="w-full bg-white py-16 rounded-t-[4rem] shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.05)] z-20 relative">
         <div className="absolute top-20 left-20 opacity-[0.03] text-primary-100 pointer-events-none">
           <GraduationCap className="w-80 h-80 -rotate-12" />

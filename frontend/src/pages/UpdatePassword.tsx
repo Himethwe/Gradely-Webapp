@@ -108,7 +108,7 @@ export default function UpdatePassword() {
             <Button
               type="submit"
               className="w-full py-3 rounded-xl text-base font-bold shadow-lg shadow-primary-100/20"
-              disabled={loading || !!error} // Disable if link is invalid
+              disabled={loading || !!error}
             >
               {loading ? "Updating..." : "Update Password"}
             </Button>
