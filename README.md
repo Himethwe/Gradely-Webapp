@@ -20,12 +20,12 @@
 
 #### Main Dashboard
 
-![Dashboard Preview](screenshots\dashboard.png)
+![Dashboard Preview](screenshots/dashboard.png)
 _Figure 1: Personalized student dashboard showing GPA trends and module summaries._
 
 #### Goal Forecasting Logic
 
-![Forecasting Preview](screenshots\strategist.png)
+![Forecasting Preview](screenshots/strategist.png)
 _Figure 2: The forecasting engine calculating required grades for future targets._
 
 ---
