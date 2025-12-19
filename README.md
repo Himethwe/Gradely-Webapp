@@ -19,23 +19,25 @@
 ### 📸 Visual Overview
 
 #### Main Dashboard
-![Dashboard Preview](screenshots/dashboard.png)
-*Figure 1: Personalized student dashboard showing GPA trends and module summaries.*
+
+![Dashboard Preview](screenshots\dashboard.png)
+_Figure 1: Personalized student dashboard showing GPA trends and module summaries._
 
 #### Goal Forecasting Logic
-![Forecasting Preview](screenshots/forecasting.png)
-*Figure 2: The forecasting engine calculating required grades for future targets.*
+
+![Forecasting Preview](screenshots\strategist.png)
+_Figure 2: The forecasting engine calculating required grades for future targets._
 
 ---
 
 #### 🛠️ Technical Stack
 
-| Component | Technology Used |
-| :--- | :--- |
-| **Frontend** | React, TypeScript, Tailwind CSS |
-| **Backend** | Python (Flask/FastAPI), RESTful APIs |
-| **Database** | SQL (PostgreSQL/MySQL) |
-| **Logic** | Client-side TypeScript (Performance) & Server-side Python |
+| Component    | Technology Used                                           |
+| :----------- | :-------------------------------------------------------- |
+| **Frontend** | React, TypeScript, Tailwind CSS                           |
+| **Backend**  | Python (Flask/FastAPI), RESTful APIs                      |
+| **Database** | SQL (PostgreSQL/MySQL)                                    |
+| **Logic**    | Client-side TypeScript (Performance) & Server-side Python |
 
 ---
 
@@ -48,4 +50,3 @@ As a **Data Science** focused project, Gradely prioritizes data integrity and lo
 - **Relational Data Modeling:** Designed a normalized **SQL schema** to handle one-to-many relationships between users, semesters, and modules.
 
 ---
-
