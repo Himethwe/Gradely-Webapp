@@ -1,10 +1,10 @@
-# 🎓 Gradely | Full-Stack Academic Planner & Analytics Tool
+## 🎓 Gradely | Full-Stack Academic Planner & Analytics Tool
 
 **Gradely** is a data-driven academic management application designed to help university students take control of their academic journey. It moves beyond simple calculations, offering personalized insights and goal forecasting to bridge the gap between current performance and future targets.
 
 ---
 
-## 🚀 Key Features
+### 🚀 Key Features
 
 - **Personalized Analytics Dashboard:** A centralized view of academic performance, visualizing trends and credit distribution.
 - **Precision GPA Engine:** Handles complex academic scenarios including:
@@ -16,19 +16,19 @@
 
 ---
 
-## 📸 Visual Overview
+### 📸 Visual Overview
 
-### Main Dashboard
+#### Main Dashboard
 ![Dashboard Preview](screenshots/dashboard.png)
 *Figure 1: Personalized student dashboard showing GPA trends and module summaries.*
 
-### Goal Forecasting Logic
+#### Goal Forecasting Logic
 ![Forecasting Preview](screenshots/forecasting.png)
 *Figure 2: The forecasting engine calculating required grades for future targets.*
 
 ---
 
-## 🛠️ Technical Stack
+#### 🛠️ Technical Stack
 
 | Component | Technology Used |
 | :--- | :--- |
@@ -39,7 +39,7 @@
 
 ---
 
-## 🏗️ Architecture & Data Logic
+### 🏗️ Architecture & Data Logic
 
 As a **Data Science** focused project, Gradely prioritizes data integrity and low-latency calculations:
 
