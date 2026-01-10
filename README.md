@@ -4,7 +4,7 @@
 
 ---
 
-### 🚀 Key Features
+### Key Features
 
 - **Personalized Analytics Dashboard:** A centralized view of academic performance, visualizing trends and credit distribution.
 - **Precision GPA Engine:** Handles complex academic scenarios including:
@@ -16,7 +16,7 @@
 
 ---
 
-### 📸 Visual Overview
+### Visual Overview
 
 #### Main Dashboard
 
@@ -30,7 +30,7 @@ _Figure 2: The forecasting engine calculating required grades for future targets
 
 ---
 
-#### 🛠️ Technical Stack
+#### Technical Stack
 
 | Component    | Technology Used                                           |
 | :----------- | :-------------------------------------------------------- |
@@ -41,7 +41,7 @@ _Figure 2: The forecasting engine calculating required grades for future targets
 
 ---
 
-### 🏗️ Architecture & Data Logic
+### Architecture & Data Logic
 
 As a **Data Science** focused project, Gradely prioritizes data integrity and low-latency calculations:
 
